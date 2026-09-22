@@ -101,9 +101,15 @@ if(PLUGIN_BUNDLED_LIBRARIES)
 endif()
 
 # flutter_rust_bridge
-set(RUSTDESK_LIB_BUILD_TYPE $<IF:$<CONFIG:Debug>,debug,release>)
-message(STATUS "rustdesk lib build type: ${RUSTDESK_LIB_BUILD_TYPE}")
-set(RUSTDESK_LIB "../../target/${RUSTDESK_LIB_BUILD_TYPE}/librustdesk.dll")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../target/debug/librustdesk.dll")
+  set(RUSTDESK_LIB "../../target/debug/librustdesk.dll")
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../target/release/librustdesk.dll")
+  set(RUSTDESK_LIB "../../target/release/librustdesk.dll")
+else()
+  set(RUSTDESK_LIB_BUILD_TYPE $<IF:$<CONFIG:Debug>,debug,release>)
+  set(RUSTDESK_LIB "../../target/${RUSTDESK_LIB_BUILD_TYPE}/librustdesk.dll")
+endif()
+message(STATUS "rustdesk lib: ${RUSTDESK_LIB}")
 install(FILES "${RUSTDESK_LIB}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
 COMPONENT Runtime RENAME librustdesk.dll)
 
