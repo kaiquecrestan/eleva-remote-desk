@@ -100,19 +100,19 @@ jobs:
 
       - name: Install pkg-config and configure host MSYS2
         run: |
-          Write-Host "Installing MSYS2 build utilities and native pkgconf via pacman..."
-          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed --overwrite "*" make perl automake1.16 automake autoconf diffutils patch mingw-w64-x86_64-pkgconf pkgconf
+          Write-Host "Installing MSYS2 build utilities and native pkgconf via MSYS2 bash..."
+          & "C:\msys64\usr\bin\bash.exe" -lc "pacman -S --noconfirm --needed make perl automake1.16 automake autoconf diffutils patch mingw-w64-x86_64-pkgconf pkgconf"
 
           # Ensure pkg-config exists at C:\msys64\mingw64\bin\pkg-config.exe
           $pkgConfig = "C:\msys64\mingw64\bin\pkg-config.exe"
           if (-not (Test-Path $pkgConfig)) {
-            Write-Host "WARNING: $pkgConfig not found after pacman, checking alternatives..."
+            Write-Host "Checking /mingw64 and /usr/bin alternatives..."
             if (Test-Path "C:\msys64\mingw64\bin\pkgconf.exe") {
               Copy-Item "C:\msys64\mingw64\bin\pkgconf.exe" -Destination $pkgConfig -Force
-            } elseif (Test-Path "C:\msys64\usr\bin\pkgconf.exe") {
-              Copy-Item "C:\msys64\usr\bin\pkgconf.exe" -Destination $pkgConfig -Force
             } elseif (Test-Path "C:\msys64\usr\bin\pkg-config.exe") {
               Copy-Item "C:\msys64\usr\bin\pkg-config.exe" -Destination $pkgConfig -Force
+            } elseif (Test-Path "C:\msys64\usr\bin\pkgconf.exe") {
+              Copy-Item "C:\msys64\usr\bin\pkgconf.exe" -Destination $pkgConfig -Force
             }
           }
 
