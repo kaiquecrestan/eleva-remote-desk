@@ -105,13 +105,18 @@ jobs:
           Write-Host "Configuring PKG_CONFIG to: $pkgConfig"
           "PKG_CONFIG=$pkgConfig" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           [Environment]::SetEnvironmentVariable("PKG_CONFIG", $pkgConfig, "Machine")
-          
+
+          # Run pacman first (without pkgconf/mingw pkgconf) so it doesn't conflict
+          # with the files we copy afterwards
+          Write-Host "Installing MSYS2 build utilities (excluding pkgconf to avoid conflict)..."
+          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf diffutils patch
+
+          # Now place the Chocolatey pkg-config at the exact paths vcpkg expects.
+          # pacman already owns those locations, so we overwrite afterwards.
           New-Item -ItemType Directory -Force -Path "C:\msys64\mingw64\bin", "C:\msys64\usr\bin"
           Copy-Item $pkgConfig -Destination "C:\msys64\mingw64\bin\pkg-config.exe" -Force
           Copy-Item $pkgConfig -Destination "C:\msys64\usr\bin\pkg-config.exe" -Force
-          
-          Write-Host "Ensuring required build utilities in host MSYS2..."
-          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf pkgconf mingw-w64-x86_64-pkgconf diffutils patch
+          Write-Host "pkg-config.exe deployed to msys64 paths."
 
       - name: Setup vcpkg with caching
         uses: lukka/run-vcpkg@v11
