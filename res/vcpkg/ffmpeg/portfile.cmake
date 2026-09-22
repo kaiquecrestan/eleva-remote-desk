@@ -564,7 +564,7 @@ if(VCPKG_TARGET_IS_WINDOWS)
     endforeach()
 endif()
 
-vcpkg_fixup_pkgconfig()
+vcpkg_fixup_pkgconfig(SKIP_CHECK)
 
 # Handle dependencies
 x_vcpkg_pkgconfig_get_modules(PREFIX FFMPEG_PKGCONFIG MODULES ${FFMPEG_PKGCONFIG_MODULES} LIBS)

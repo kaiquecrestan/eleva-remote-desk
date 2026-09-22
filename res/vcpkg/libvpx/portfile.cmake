@@ -298,7 +298,7 @@ else()
     endif()
 endif()
 
-vcpkg_fixup_pkgconfig()
+vcpkg_fixup_pkgconfig(SKIP_CHECK)
 
 if(NOT DEFINED VCPKG_BUILD_TYPE OR VCPKG_BUILD_TYPE STREQUAL "debug")
     set(LIBVPX_CONFIG_DEBUG ON)

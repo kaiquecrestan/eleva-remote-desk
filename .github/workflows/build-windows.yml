@@ -106,8 +106,12 @@ jobs:
           "PKG_CONFIG=$pkgConfig" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           [Environment]::SetEnvironmentVariable("PKG_CONFIG", $pkgConfig, "Machine")
           
+          New-Item -ItemType Directory -Force -Path "C:\msys64\mingw64\bin", "C:\msys64\usr\bin"
+          Copy-Item $pkgConfig -Destination "C:\msys64\mingw64\bin\pkg-config.exe" -Force
+          Copy-Item $pkgConfig -Destination "C:\msys64\usr\bin\pkg-config.exe" -Force
+          
           Write-Host "Ensuring required build utilities in host MSYS2..."
-          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf pkgconf diffutils patch
+          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf pkgconf mingw-w64-x86_64-pkgconf diffutils patch
 
       - name: Setup vcpkg with caching
         uses: lukka/run-vcpkg@v11
@@ -119,7 +123,8 @@ jobs:
       - name: Patch vcpkg to use host MSYS2
         run: |
           Copy-Item -Path "res\vcpkg\vcpkg_acquire_msys.cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake" -Force
-          Write-Host "Successfully replaced C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake with host MSYS2 override."
+          Copy-Item -Path "res\vcpkg\vcpkg_find_acquire_program(PKGCONFIG).cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_find_acquire_program(PKGCONFIG).cmake" -Force
+          Write-Host "Successfully replaced vcpkg MSYS2 and PKGCONFIG acquisition scripts."
 
       - name: Install vcpkg static dependencies
         run: |
