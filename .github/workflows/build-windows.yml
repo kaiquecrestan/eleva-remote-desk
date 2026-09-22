@@ -98,6 +98,17 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }}
           targets: x86_64-pc-windows-msvc
 
+      - name: Install pkg-config and configure host MSYS2
+        run: |
+          choco install -y pkgconfiglite
+          $pkgConfig = "C:\ProgramData\chocolatey\bin\pkg-config.exe"
+          Write-Host "Configuring PKG_CONFIG to: $pkgConfig"
+          "PKG_CONFIG=$pkgConfig" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          [Environment]::SetEnvironmentVariable("PKG_CONFIG", $pkgConfig, "Machine")
+          
+          Write-Host "Ensuring required build utilities in host MSYS2..."
+          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf pkgconf diffutils patch
+
       - name: Setup vcpkg with caching
         uses: lukka/run-vcpkg@v11
         with:
@@ -105,8 +116,14 @@ jobs:
           vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
           doNotCache: false
 
+      - name: Patch vcpkg to use host MSYS2
+        run: |
+          Copy-Item -Path "res\vcpkg\vcpkg_acquire_msys.cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake" -Force
+          Write-Host "Successfully replaced C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake with host MSYS2 override."
+
       - name: Install vcpkg static dependencies
         run: |
+          $env:PKG_CONFIG = "C:\ProgramData\chocolatey\bin\pkg-config.exe"
           if (-not $env:ACTIONS_RUNTIME_TOKEN -or -not $env:ACTIONS_CACHE_URL) {
             Write-Host "Actions cache token not found. Falling back to local binary caching."
             $env:VCPKG_BINARY_SOURCES = "clear;default,readwrite"
