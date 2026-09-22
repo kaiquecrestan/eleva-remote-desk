@@ -82,7 +82,10 @@ def main():
         f.write(simbolo_content)
     with open(os.path.join(RES_DIR, "scalable.svg"), "w", encoding="utf-8") as f:
         f.write(simbolo_content)
-    print("  Copied symbol SVGs to res/ and flutter/assets/")
+    
+    # Save icon.png in flutter/assets
+    images[256].save(os.path.join(FLUTTER_ASSETS_DIR, "icon.png"), format="PNG")
+    print("  Copied symbol SVGs and icon.png to flutter/assets/")
 
     # 6. Create optimized horizontal logo-header.svg with fitted viewBox
     # Exact bounding box in Logo Eleva is (79, 798, 2084, 1314)
@@ -99,9 +102,19 @@ def main():
         'width="1000px" height="272px"'
     )
 
-    with open(os.path.join(RES_DIR, "logo-header.svg"), "w", encoding="utf-8") as f:
+    header_svg_path = os.path.join(RES_DIR, "logo-header.svg")
+    with open(header_svg_path, "w", encoding="utf-8") as f:
         f.write(header_svg)
-    print("  Generated optimized horizontal res/logo-header.svg")
+    with open(os.path.join(FLUTTER_ASSETS_DIR, "logo.svg"), "w", encoding="utf-8") as f:
+        f.write(header_svg)
+    print("  Generated optimized horizontal res/logo-header.svg & flutter/assets/logo.svg")
+
+    # 7. Rasterize horizontal logo for Flutter UI (max 300x60 in Flutter home page)
+    # Rasterizing at 600x163 for high DPI retina sharpness
+    logo_png_bytes = resvg_py.svg_to_bytes(svg_string=header_svg, width=600, height=163)
+    logo_img = Image.open(io.BytesIO(logo_png_bytes)).convert("RGBA")
+    logo_img.save(os.path.join(FLUTTER_ASSETS_DIR, "logo.png"), format="PNG")
+    print(f"  Generated {os.path.join(FLUTTER_ASSETS_DIR, 'logo.png')} (600x163 RGBA)")
 
     print("\nAll Eleva Remote Desk branding assets generated successfully!")
 

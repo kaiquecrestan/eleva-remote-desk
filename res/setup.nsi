@@ -12,6 +12,8 @@ Unicode true
 # File Info
 
 !define PRODUCT_NAME "Eleva Remote Desk"
+!define SERVICE_NAME "ElevaRemoteDesk"
+!define SERVICE_DISPLAY_NAME "Eleva Remote Desk Service"
 !define PRODUCT_DESCRIPTION "Installer for ${PRODUCT_NAME}"
 !define COPYRIGHT "Copyright © 2026 Eleva Business Solutions"
 !define VERSION "1.0.0"
@@ -142,7 +144,11 @@ Section "Install"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "URLInfoAbout" "https://github.com/kaiquecrestan/eleva-remote-desk"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "URLUpdateInfo" "https://github.com/kaiquecrestan/eleva-remote-desk"
 
-  nsExec::Exec "taskkill /F /IM ${PRODUCT_NAME}.exe"
+  # Kill previous processes and stop any existing service
+  nsExec::Exec 'taskkill /F /IM "${PRODUCT_NAME}.exe"'
+  nsExec::Exec 'sc stop "${SERVICE_NAME}"'
+  nsExec::Exec 'sc stop "${PRODUCT_NAME}"'
+  nsExec::Exec 'sc stop RustDesk'
   Sleep 500 ; Give time for process to be completely killed
   File "${PRODUCT_NAME}.exe"
 
@@ -153,9 +159,11 @@ Section "Install"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall ${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_NAME}.exe" "--uninstall" "msiexec.exe"
   CreateShortCut "$SMSTARTUP\${PRODUCT_NAME} Tray.lnk" "$INSTDIR\${PRODUCT_NAME}.exe" "--tray"
   
-  nsExec::Exec 'sc create ${PRODUCT_NAME} start=auto DisplayName="${PRODUCT_NAME} Service" binPath= "\"$INSTDIR\${PRODUCT_NAME}.exe\" --service"'
-  nsExec::Exec 'netsh advfirewall firewall add rule name="${PRODUCT_NAME} Service" dir=in action=allow program="$INSTDIR\${PRODUCT_NAME}.exe" enable=yes'
-  nsExec::Exec 'sc start ${PRODUCT_NAME}'
+  # Register and start Windows service with correct sc.exe syntax
+  nsExec::Exec 'sc delete "${SERVICE_NAME}"'
+  nsExec::Exec 'sc create "${SERVICE_NAME}" start= auto DisplayName= "${SERVICE_DISPLAY_NAME}" binPath= "\"$INSTDIR\${PRODUCT_NAME}.exe\" --service"'
+  nsExec::Exec 'netsh advfirewall firewall add rule name="${SERVICE_DISPLAY_NAME}" dir=in action=allow program="$INSTDIR\${PRODUCT_NAME}.exe" enable=yes'
+  nsExec::Exec 'sc start "${SERVICE_NAME}"'
 SectionEnd
 
 ####################################################################

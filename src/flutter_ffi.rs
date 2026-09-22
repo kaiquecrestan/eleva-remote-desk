@@ -35,6 +35,7 @@ lazy_static::lazy_static! {
 }
 
 fn initialize(app_dir: &str, custom_client_config: &str) {
+    crate::common::global_init();
     flutter::async_tasks::start_flutter_async_runner();
     *config::APP_DIR.write().unwrap() = app_dir.to_owned();
     // core_main's load_custom_client does not work for flutter since it is only applied to its load_library in main.c

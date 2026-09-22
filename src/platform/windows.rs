@@ -459,10 +459,12 @@ fn service_main(arguments: Vec<OsString>) {
 }
 
 pub fn start_os_service() {
-    if let Err(e) =
-        windows_service::service_dispatcher::start(crate::get_app_name(), ffi_service_main)
-    {
-        log::error!("start_service failed: {}", e);
+    let name = crate::get_app_name();
+    if let Err(e) = windows_service::service_dispatcher::start(&name, ffi_service_main) {
+        let name_no_space = name.replace(" ", "");
+        if let Err(e2) = windows_service::service_dispatcher::start(&name_no_space, ffi_service_main) {
+            log::error!("start_service failed for '{}' ({}) and '{}' ({})", name, e, name_no_space, e2);
+        }
     }
 }
 
@@ -2341,12 +2343,12 @@ fn get_import_config(exe: &str) -> String {
         return "".to_string();
     }
     format!("
-sc stop {app_name}
-sc delete {app_name}
-sc create {app_name} binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
-sc start {app_name}
-sc stop {app_name}
-sc delete {app_name}
+sc stop \"{app_name}\"
+sc delete \"{app_name}\"
+sc create \"{app_name}\" binpath= \"\\\"{exe}\\\" --import-config \\\"{config_path}\\\"\" start= auto DisplayName= \"{app_name} Service\"
+sc start \"{app_name}\"
+sc stop \"{app_name}\"
+sc delete \"{app_name}\"
 ",
     app_name = crate::get_app_name(),
     config_path=Config::file().to_str().unwrap_or(""),
@@ -2364,8 +2366,8 @@ if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{ap
 ", app_name = crate::get_app_name())
     } else {
         format!("
-sc create {app_name} binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
-sc start {app_name}
+sc create \"{app_name}\" binpath= \"\\\"{exe}\\\" --service\" start= auto DisplayName= \"{app_name} Service\"
+sc start \"{app_name}\"
 ",
     app_name = crate::get_app_name())
     }

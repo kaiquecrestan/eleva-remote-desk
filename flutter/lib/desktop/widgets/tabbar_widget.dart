@@ -633,8 +633,8 @@ class _DesktopTabState extends State<DesktopTab>
                         ),
                         Offstage(
                             offstage: !showTitle,
-                            child: const Text(
-                              "RustDesk",
+                            child: Text(
+                              bind.mainGetAppNameSync(),
                               style: TextStyle(fontSize: 13),
                             ).marginOnly(left: 2))
                       ]).marginOnly(
@@ -1459,7 +1459,7 @@ class TabbarTheme extends ThemeExtension<TabbarTheme> {
 
   static const dark = TabbarTheme(
       selectedTabIconColor: MyTheme.accent,
-      unSelectedTabIconColor: Color.fromARGB(255, 30, 65, 98),
+      unSelectedTabIconColor: Color(0x88ED5F00),
       selectedTextColor: Colors.white,
       unSelectedTextColor: Color.fromARGB(255, 192, 192, 192),
       selectedIconColor: Color.fromARGB(255, 192, 192, 192),
