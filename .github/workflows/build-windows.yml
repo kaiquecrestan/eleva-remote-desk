@@ -1,0 +1,132 @@
+name: Eleva Remote Desk - Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+env:
+  FLUTTER_VERSION: "3.24.5"
+  RUST_VERSION: "1.75"
+  LLVM_VERSION: "15.0.6"
+  VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
+  ELEVA_VERSION: "1.0.0"
+  ELEVA_REMOTE_ID_SERVER: "remote.elevabusinesssolutions.com.br"
+  ELEVA_REMOTE_RELAY_SERVER: "relay.elevabusinesssolutions.com.br"
+  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY }}"
+
+jobs:
+  build-windows:
+    name: Build Eleva Remote Desk Windows x64
+    runs-on: windows-2022
+    steps:
+      - name: Checkout source code with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: ${{ env.LLVM_VERSION }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2.12.0
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Replace Flutter engine with custom Windows engine
+        run: |
+          flutter doctor -v
+          flutter precache --windows
+          Invoke-WebRequest -Uri https://github.com/rustdesk/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
+          Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
+          mv -Force windows-x64-release/* C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup vcpkg with caching
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: C:\vcpkg
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg static dependencies
+        run: |
+          C:\vcpkg\vcpkg install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed" libvpx libyuv opus
+        shell: bash
+
+      - name: Build Rust Native Library
+        env:
+          VCPKG_ROOT: C:\vcpkg
+        run: |
+          cargo build --features flutter --release --lib
+
+      - name: Build Flutter Windows Application
+        run: |
+          cd flutter
+          flutter pub get
+          flutter build windows --release
+
+      - name: Package Release Artifacts
+        shell: bash
+        run: |
+          mkdir -p dist
+          # Copy Flutter build output
+          cp -r flutter/build/windows/x64/runner/Release/* dist/
+          # Ensure executable named ElevaRemoteDesk.exe
+          if [ -f "dist/flutter_hbb.exe" ]; then
+            mv dist/flutter_hbb.exe dist/ElevaRemoteDesk.exe
+          fi
+          
+          # Bundle source code archive corresponding to this release (AGPL-3.0 compliance)
+          TAG_NAME="${{ github.ref_name || inputs.release-tag }}"
+          git archive --format=zip --prefix="eleva-remote-desk-${TAG_NAME}/" HEAD -o "dist/source-${TAG_NAME}.zip"
+
+          # Calculate SHA-256 checksums
+          cd dist
+          sha256sum ElevaRemoteDesk.exe > SHA256SUMS.txt
+          sha256sum source-${TAG_NAME}.zip >> SHA256SUMS.txt
+
+      - name: Upload Artifacts to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElevaRemoteDesk-Windows-x64
+          path: dist/*
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release-tag != ''
+        with:
+          tag_name: ${{ github.ref_name || inputs.release-tag }}
+          name: Eleva Remote Desk ${{ github.ref_name || inputs.release-tag }}
+          body: |
+            ## Eleva Remote Desk ${{ github.ref_name || inputs.release-tag }}
+            
+            Remote desktop client for the Eleva Remote ecosystem, based on RustDesk (AGPL-3.0).
+            
+            ### Included Artifacts
+            - `ElevaRemoteDesk.exe` (Windows 64-bit desktop client)
+            - `source-${{ github.ref_name || inputs.release-tag }}.zip` (Exact corresponding source code archive)
+            - `SHA256SUMS.txt` (Integrity checksums)
+            
+            ### License & Source Code Compliance
+            This release is distributed under the terms of the **GNU Affero General Public License v3.0**.
+            Source code repository: [https://github.com/kaiquecrestan/eleva-remote-desk](https://github.com/kaiquecrestan/eleva-remote-desk)
+          files: |
+            dist/ElevaRemoteDesk.exe
+            dist/source-*.zip
+            dist/SHA256SUMS.txt

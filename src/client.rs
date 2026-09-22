@@ -501,7 +501,11 @@ impl Client {
         conn: &mut Stream,
     ) -> ResultType<Option<Vec<u8>>> {
         let rs_pk = get_rs_pk(if key.is_empty() {
-            config::RS_PUB_KEY
+            if !crate::eleva_config::DEFAULT_PUBLIC_KEY.is_empty() {
+                crate::eleva_config::DEFAULT_PUBLIC_KEY
+            } else {
+                config::RS_PUB_KEY
+            }
         } else {
             key
         });
@@ -1531,7 +1535,11 @@ impl LoginConfigHandler {
             let server = server_key.next().unwrap_or_default();
             let args = server_key.next().unwrap_or_default();
             let key = if server == PUBLIC_SERVER {
-                config::RS_PUB_KEY.to_owned()
+                if !crate::eleva_config::DEFAULT_PUBLIC_KEY.is_empty() {
+                    crate::eleva_config::DEFAULT_PUBLIC_KEY.to_owned()
+                } else {
+                    config::RS_PUB_KEY.to_owned()
+                }
             } else {
                 let mut args_map: HashMap<String, &str> = HashMap::new();
                 for arg in args.split('&') {

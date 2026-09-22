@@ -1,4 +1,4 @@
-﻿Unicode true
+Unicode true
 
 ####################################################################
 # Includes
@@ -11,10 +11,10 @@
 ####################################################################
 # File Info
 
-!define PRODUCT_NAME "RustDesk"
+!define PRODUCT_NAME "Eleva Remote Desk"
 !define PRODUCT_DESCRIPTION "Installer for ${PRODUCT_NAME}"
-!define COPYRIGHT "Copyright © 2021"
-!define VERSION "1.1.6"
+!define COPYRIGHT "Copyright © 2026 Eleva Business Solutions"
+!define VERSION "1.0.0"
 
 VIProductVersion "${VERSION}.0"
 VIAddVersionKey "ProductName" "${PRODUCT_NAME}"
@@ -27,7 +27,7 @@ VIAddVersionKey "FileVersion" "${VERSION}.0"
 # Installer Attributes
 
 Name "${PRODUCT_NAME}"
-Outfile "rustdesk-${VERSION}-setup.exe"
+Outfile "ElevaRemoteDesk-Setup-x64.exe"
 Caption "Setup - ${PRODUCT_NAME}"
 BrandingText "${PRODUCT_NAME}"
 

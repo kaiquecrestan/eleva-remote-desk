@@ -2072,7 +2072,7 @@ class _AboutState extends State<_About> {
       final scrollController = ScrollController();
       return SingleChildScrollView(
         controller: scrollController,
-        child: _Card(title: translate('About RustDesk'), children: [
+        child: _Card(title: 'Eleva Remote Desk', children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2080,7 +2080,12 @@ class _AboutState extends State<_About> {
                 height: 8.0,
               ),
               SelectionArea(
-                  child: Text('${translate('Version')}: $version')
+                  child: const Text('Eleva Remote Desk',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold))
+                      .marginSymmetric(vertical: 4.0)),
+              SelectionArea(
+                  child: Text('${translate('Version')}: 1.0.0 (Base RustDesk: $version)')
                       .marginSymmetric(vertical: 4.0)),
               SelectionArea(
                   child: Text('${translate('Build Date')}: $buildDate')
@@ -2091,24 +2096,18 @@ class _AboutState extends State<_About> {
                         .marginSymmetric(vertical: 4.0)),
               InkWell(
                   onTap: () {
-                    launchUrlString('https://rustdesk.com/privacy.html');
+                    launchUrlString('https://github.com/kaiquecrestan/eleva-remote-desk');
                   },
-                  child: Text(
-                    translate('Privacy Statement'),
-                    style: linkStyle,
-                  ).marginSymmetric(vertical: 4.0)),
-              InkWell(
-                  onTap: () {
-                    launchUrlString('https://rustdesk.com');
-                  },
-                  child: Text(
-                    translate('Website'),
+                  child: const Text(
+                    'Código-fonte correspondente (GitHub)',
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
               Container(
-                decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
+                decoration: const BoxDecoration(
+                    color: Color(0xFF1E40AF),
+                    borderRadius: BorderRadius.all(Radius.circular(6))),
                 padding:
-                    const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                 child: SelectionArea(
                     child: Row(
                   children: [
@@ -2117,21 +2116,17 @@ class _AboutState extends State<_About> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Copyright © ${DateTime.now().toString().substring(0, 4)} Purslane Ltd.\n$license',
-                            style: const TextStyle(color: Colors.white),
+                            '© ${DateTime.now().toString().substring(0, 4)} Eleva Business Solutions\n\n'
+                            'Eleva Remote Desk utiliza software open source derivado do projeto RustDesk.\n'
+                            'O código derivado do RustDesk é disponibilizado sob os termos da GNU Affero General Public License v3.0 (AGPL-3.0).',
+                            style: const TextStyle(color: Colors.white, height: 1.3),
                           ),
-                          Text(
-                            translate('Slogan_tip'),
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white),
-                          )
                         ],
                       ),
                     ),
                   ],
                 )),
-              ).marginSymmetric(vertical: 4.0)
+              ).marginSymmetric(vertical: 8.0)
             ],
           ).marginOnly(left: _kContentHMargin)
         ]),

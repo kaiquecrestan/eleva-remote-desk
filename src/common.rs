@@ -101,6 +101,15 @@ impl Drop for SimpleCallOnReturn {
 }
 
 pub fn global_init() -> bool {
+    // Ensure Eleva defaults are loaded
+    if hbb_common::config::APP_NAME.read().unwrap().eq("RustDesk") {
+        *hbb_common::config::APP_NAME.write().unwrap() = crate::eleva_config::APP_NAME.to_string();
+    }
+    if hbb_common::config::PROD_RENDEZVOUS_SERVER.read().unwrap().is_empty() {
+        *hbb_common::config::PROD_RENDEZVOUS_SERVER.write().unwrap() =
+            crate::eleva_config::DEFAULT_ID_SERVER.to_string();
+    }
+
     #[cfg(target_os = "linux")]
     {
         if !crate::platform::linux::is_x11() {
@@ -1175,7 +1184,11 @@ pub async fn get_key(sync: bool) -> String {
         options.remove("key").unwrap_or_default()
     };
     if key.is_empty() {
-        key = config::RS_PUB_KEY.to_owned();
+        if !crate::eleva_config::DEFAULT_PUBLIC_KEY.is_empty() {
+            key = crate::eleva_config::DEFAULT_PUBLIC_KEY.to_owned();
+        } else {
+            key = config::RS_PUB_KEY.to_owned();
+        }
     }
     key
 }
