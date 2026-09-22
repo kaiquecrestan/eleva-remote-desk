@@ -97,6 +97,11 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
           targets: x86_64-pc-windows-msvc
+          components: "rustfmt"
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "windows-x64"
 
       - name: Install pkg-config and configure host MSYS2
         run: |
@@ -147,7 +152,10 @@ jobs:
           Write-Host "pkg-config is at: C:\msys64\mingw64\bin\pkg-config.exe"
 
       - name: Install vcpkg static dependencies
+        env:
+          VCPKG_DEFAULT_HOST_TRIPLET: x64-windows-static
         run: |
+          $env:VCPKG_DEFAULT_HOST_TRIPLET = "x64-windows-static"
           $env:PKG_CONFIG = "C:\msys64\mingw64\bin\pkg-config.exe"
           $env:PATH = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
           if (-not $env:ACTIONS_RUNTIME_TOKEN -or -not $env:ACTIONS_CACHE_URL) {
@@ -159,7 +167,20 @@ jobs:
           }
           $vcpkg = if (Test-Path "$env:VCPKG_ROOT\vcpkg.exe") { "$env:VCPKG_ROOT\vcpkg.exe" } elseif (Test-Path "C:\vcpkg\vcpkg.exe") { "C:\vcpkg\vcpkg.exe" } else { "vcpkg" }
           Write-Host "Using vcpkg executable at: $vcpkg"
-          & $vcpkg install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed"
+          & $vcpkg install --triplet x64-windows-static --host-triplet x64-windows-static --x-install-root="C:\vcpkg\installed"
+
+          # Sync any dynamic host headers/libs into static target if present
+          if (Test-Path "C:\vcpkg\installed\x64-windows\include") {
+            Write-Host "Syncing x64-windows include headers to x64-windows-static..."
+            Copy-Item -Path "C:\vcpkg\installed\x64-windows\include\*" -Destination "C:\vcpkg\installed\x64-windows-static\include\" -Recurse -Force
+          }
+          if (Test-Path "C:\vcpkg\installed\x64-windows\lib") {
+            Write-Host "Syncing x64-windows lib files to x64-windows-static..."
+            Copy-Item -Path "C:\vcpkg\installed\x64-windows\lib\*" -Destination "C:\vcpkg\installed\x64-windows-static\lib\" -Recurse -Force
+          }
+
+          Write-Host "Contents of C:\vcpkg\installed\x64-windows-static\include:"
+          Get-ChildItem "C:\vcpkg\installed\x64-windows-static\include" | Select-Object -First 15
 
       - name: Build Core and Flutter application
         env:
