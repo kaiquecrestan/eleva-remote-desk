@@ -17,9 +17,9 @@ env:
   LLVM_VERSION: "15.0.6"
   VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
   ELEVA_VERSION: "1.0.0"
-  ELEVA_REMOTE_ID_SERVER: "remote.elevabusinesssolutions.com.br"
-  ELEVA_REMOTE_RELAY_SERVER: "relay.elevabusinesssolutions.com.br"
-  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY }}"
+  ELEVA_REMOTE_ID_SERVER: "desk.eleva.art:21116"
+  ELEVA_REMOTE_RELAY_SERVER: "desk.eleva.art:21117"
+  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=' }}"
 
 jobs:
   build-windows:

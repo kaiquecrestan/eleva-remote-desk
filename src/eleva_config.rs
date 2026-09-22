@@ -5,22 +5,22 @@
 
 pub const DEFAULT_ID_SERVER: &str = match option_env!("ELEVA_REMOTE_ID_SERVER") {
     Some(s) => s,
-    None => "remote.elevabusinesssolutions.com.br",
+    None => "desk.eleva.art:21116",
 };
 
 pub const DEFAULT_RELAY_SERVER: &str = match option_env!("ELEVA_REMOTE_RELAY_SERVER") {
     Some(s) => s,
-    None => "relay.elevabusinesssolutions.com.br",
+    None => "desk.eleva.art:21117",
 };
 
 pub const DEFAULT_PUBLIC_KEY: &str = match option_env!("ELEVA_REMOTE_PUBLIC_KEY") {
-    Some(s) => s,
-    None => "",
+    Some(k) => k,
+    None => "lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=",
 };
 
 pub const DEFAULT_API_URL: &str = match option_env!("ELEVA_REMOTE_API_URL") {
     Some(s) => s,
-    None => "https://api.remote.elevabusinesssolutions.com.br",
+    None => "",
 };
 
 pub const APP_NAME: &str = "Eleva Remote Desk";
