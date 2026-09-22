@@ -35,17 +35,17 @@ To maintain custom branding across builds, the following asset files are replace
 
 ---
 
-## 3. UI Color Palette (Eleva Theme)
+## 3. UI Color Palette (Eleva Brand Standards)
 
-The Eleva visual identity uses modern, high-contrast, clean tones:
+The official brand color palette of Eleva:
 
-- **Primary Brand Color**: Indigo / Royal Blue (`#1E40AF` / `#2563EB`)
-- **Accent / Action Color**: Vibrant Blue (`#3B82F6`)
-- **Dark Mode Background**: Dark Slate (`#0F172A`)
-- **Light Mode Background**: Off-white / Clean Canvas (`#F8FAFC`)
+- **Primary Brand Color (Orange)**: `#ED5F00` (R:237 G:95 B:0 | C:2 M:79 Y:100 K:0)
+- **Dark Grey**: `#2F2F2F` (R:47 G:47 B:47 | C:73 M:67 Y:66 K:82)
+- **Medium Grey**: `#555555` (R:85 G:85 B:85 | C:65 M:58 Y:57 K:38)
+- **Light Grey**: `#8D8D8D` (R:141 G:141 B:141 | C:49 M:40 Y:40 K:4)
 - **Status Green (Online / Connected)**: Emerald (`#10B981`)
-- **Status Yellow (Connecting / Relay)**: Amber (`#F59E0B`)
-- **Status Red (Disconnected / Error)**: Rose (`#EF4444`)
+- **Status Amber (Connecting / Relay)**: `#F59E0B`
+- **Status Red (Disconnected / Error)**: `#EF4444`
 
 ---
 
