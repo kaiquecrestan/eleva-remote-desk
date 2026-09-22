@@ -97,7 +97,9 @@ jobs:
 
       - name: Install vcpkg static dependencies
         run: |
-          & "C:\vcpkg\vcpkg.exe" install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed"
+          $vcpkg = if (Test-Path "$env:VCPKG_ROOT\vcpkg.exe") { "$env:VCPKG_ROOT\vcpkg.exe" } elseif (Test-Path "C:\vcpkg\vcpkg.exe") { "C:\vcpkg\vcpkg.exe" } else { "vcpkg" }
+          Write-Host "Using vcpkg executable at: $vcpkg"
+          & $vcpkg install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed"
 
       - name: Build Core and Flutter application
         env:
