@@ -128,8 +128,8 @@ jobs:
       - name: Patch vcpkg to use host MSYS2
         run: |
           Copy-Item -Path "res\vcpkg\vcpkg_acquire_msys.cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake" -Force
-          Copy-Item -Path "res\vcpkg\vcpkg_find_acquire_program(PKGCONFIG).cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_find_acquire_program(PKGCONFIG).cmake" -Force
-          Write-Host "Successfully replaced vcpkg MSYS2 and PKGCONFIG acquisition scripts."
+          Write-Host "Replaced vcpkg_acquire_msys.cmake - vcpkg will now use C:/msys64 directly."
+          Write-Host "pkg-config.exe is at: C:\msys64\mingw64\bin\pkg-config.exe"
 
       - name: Install vcpkg static dependencies
         run: |
