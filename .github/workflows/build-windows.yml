@@ -22,15 +22,39 @@ env:
   ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=' }}"
 
 jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+
+  build-RustDeskTempTopMostWindow:
+    uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
+    with:
+      upload-artifact: true
+      target: windows-2022
+      configuration: Release
+      platform: x64
+      target_version: Windows10
+    strategy:
+      fail-fast: false
+
   build-windows:
     name: Build Eleva Remote Desk Windows x64
+    needs: [build-RustDeskTempTopMostWindow, generate-bridge]
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: powershell
     steps:
       - name: Checkout source code with submodules
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-artifact
+          path: ./
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
@@ -49,7 +73,14 @@ jobs:
           flutter precache --windows
           Invoke-WebRequest -Uri https://github.com/rustdesk/engine/releases/download/main/windows-x64-release.zip -OutFile windows-x64-release.zip
           Expand-Archive -Path windows-x64-release.zip -DestinationPath windows-x64-release
-          mv -Force windows-x64-release/* C:/hostedtoolcache/windows/flutter/stable-${{ env.FLUTTER_VERSION }}-x64/bin/cache/artifacts/engine/windows-x64-release/
+          Copy-Item -Path "windows-x64-release\*" -Destination "C:\hostedtoolcache\windows\flutter\stable-${{ env.FLUTTER_VERSION }}-x64\bin\cache\artifacts\engine\windows-x64-release\" -Recurse -Force
+
+      - name: Patch Flutter dropdown menu
+        shell: bash
+        run: |
+          cp .github/patches/flutter_3.24.4_dropdown_menu_enableFilter.diff $(dirname $(dirname $(which flutter)))
+          cd $(dirname $(dirname $(which flutter)))
+          [[ "3.24.5" == ${{ env.FLUTTER_VERSION }} ]] && git apply flutter_3.24.4_dropdown_menu_enableFilter.diff
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@v1
@@ -66,46 +97,54 @@ jobs:
 
       - name: Install vcpkg static dependencies
         run: |
-          C:\vcpkg\vcpkg install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed" libvpx libyuv opus
-        shell: bash
+          & "C:\vcpkg\vcpkg.exe" install --triplet x64-windows-static --x-install-root="C:\vcpkg\installed"
 
-      - name: Build Rust Native Library
+      - name: Build Core and Flutter application
         env:
           VCPKG_ROOT: C:\vcpkg
         run: |
-          cargo build --features flutter --release --lib
+          python .\build.py --portable --hwcodec --flutter --vram --skip-portable-pack
+          Move-Item -Path .\flutter\build\windows\x64\runner\Release -Destination .\rustdesk -Force
 
-      - name: Build Flutter Windows Application
-        run: |
-          cd flutter
-          flutter pub get
-          flutter build windows --release
+      - name: Download RustDeskTempTopMostWindow artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: topmostwindow-artifacts
+          path: .\rustdesk
 
-      - name: Package Release Artifacts
-        shell: bash
+      - name: Package Single Standalone Executable
         run: |
-          mkdir -p dist
-          # Copy Flutter build output
-          cp -r flutter/build/windows/x64/runner/Release/* dist/
-          # Ensure executable named ElevaRemoteDesk.exe
-          if [ -f "dist/flutter_hbb.exe" ]; then
-            mv dist/flutter_hbb.exe dist/ElevaRemoteDesk.exe
-          fi
+          (Get-Content res\manifest.xml) -notmatch "dpiAware" | Set-Content res\manifest.xml
+          Push-Location libs\portable
+          pip install -r requirements.txt
+          python generate.py -f ..\..\rustdesk\ -o . -e ..\..\rustdesk\rustdesk.exe
+          Pop-Location
+          New-Item -ItemType Directory -Force -Path dist
+          Move-Item -Path target\release\rustdesk-portable-packer.exe -Destination dist\ElevaRemoteDesk.exe -Force
+
+      - name: Build NSIS Setup Installer
+        run: |
+          Copy-Item dist\ElevaRemoteDesk.exe -Destination "res\Eleva Remote Desk.exe" -Force
+          & "C:\Program Files (x86)\NSIS\makensis.exe" res\setup.nsi
+          Move-Item -Path "res\ElevaRemoteDesk-Setup-x64.exe" -Destination "dist\ElevaRemoteDesk-Setup-x64.exe" -Force
+
+      - name: Generate Checksums and Source Archive
+        run: |
+          $tag = "${{ github.ref_name || inputs.release-tag }}"
+          git archive --format=zip --prefix="eleva-remote-desk-$tag/" HEAD -o "dist\source-$tag.zip"
           
-          # Bundle source code archive corresponding to this release (AGPL-3.0 compliance)
-          TAG_NAME="${{ github.ref_name || inputs.release-tag }}"
-          git archive --format=zip --prefix="eleva-remote-desk-${TAG_NAME}/" HEAD -o "dist/source-${TAG_NAME}.zip"
-
-          # Calculate SHA-256 checksums
-          cd dist
-          sha256sum ElevaRemoteDesk.exe > SHA256SUMS.txt
-          sha256sum source-${TAG_NAME}.zip >> SHA256SUMS.txt
+          Set-Location dist
+          Get-FileHash -Algorithm SHA256 ElevaRemoteDesk.exe, ElevaRemoteDesk-Setup-x64.exe, "source-$tag.zip" | ForEach-Object {
+            "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)"
+          } | Out-File -Encoding utf8 SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+          Set-Location ..
 
       - name: Upload Artifacts to GitHub Actions
         uses: actions/upload-artifact@v4
         with:
           name: ElevaRemoteDesk-Windows-x64
-          path: dist/*
+          path: dist\*
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
@@ -116,17 +155,18 @@ jobs:
           body: |
             ## Eleva Remote Desk ${{ github.ref_name || inputs.release-tag }}
             
-            Remote desktop client for the Eleva Remote ecosystem, based on RustDesk (AGPL-3.0).
+            Cliente de acesso remoto oficial do ecossistema Eleva Remote, baseado no projeto open source RustDesk sob licença AGPL-3.0.
             
-            ### Included Artifacts
-            - `ElevaRemoteDesk.exe` (Windows 64-bit desktop client)
-            - `source-${{ github.ref_name || inputs.release-tag }}.zip` (Exact corresponding source code archive)
-            - `SHA256SUMS.txt` (Integrity checksums)
+            ### Artefatos Disponíveis
+            - `ElevaRemoteDesk.exe`: Executável portátil para Windows x64 (não requer instalação).
+            - `ElevaRemoteDesk-Setup-x64.exe`: Instalador completo do Windows com registro automático do serviço de acesso em segundo plano.
+            - `SHA256SUMS.txt`: Hashes de integridade criptográfica SHA-256.
+            - `source-${{ github.ref_name || inputs.release-tag }}.zip`: Código-fonte correspondente a esta compilação.
             
-            ### License & Source Code Compliance
-            This release is distributed under the terms of the **GNU Affero General Public License v3.0**.
-            Source code repository: [https://github.com/kaiquecrestan/eleva-remote-desk](https://github.com/kaiquecrestan/eleva-remote-desk)
+            ### Conformidade AGPL-3.0
+            Código-fonte correspondente público: [https://github.com/kaiquecrestan/eleva-remote-desk](https://github.com/kaiquecrestan/eleva-remote-desk)
           files: |
             dist/ElevaRemoteDesk.exe
+            dist/ElevaRemoteDesk-Setup-x64.exe
             dist/source-*.zip
             dist/SHA256SUMS.txt
