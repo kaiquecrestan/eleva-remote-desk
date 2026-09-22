@@ -100,35 +100,38 @@ jobs:
 
       - name: Install pkg-config and configure host MSYS2
         run: |
-          choco install -y pkgconfiglite
+          Write-Host "Installing MSYS2 build utilities and native pkgconf via pacman..."
+          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed --overwrite "*" make perl automake1.16 automake autoconf diffutils patch mingw-w64-x86_64-pkgconf pkgconf
 
-          # The chocolatey 'bin' entry is a SHIM, not the real binary.
-          # Find the actual pkg-config.exe inside the Chocolatey lib folder.
-          $realBin = Get-ChildItem "C:\ProgramData\chocolatey\lib\pkgconfiglite" -Recurse -Filter "pkg-config.exe" |
-                     Where-Object { $_.FullName -notmatch "\\bin\\pkg-config\.exe$" -or $true } |
-                     Select-Object -First 1 -ExpandProperty FullName
-          if (-not $realBin) {
-            # Fallback: look in tools folder directly
-            $realBin = "C:\ProgramData\chocolatey\lib\pkgconfiglite\tools\pkg-config-lite-0.28-1\bin\pkg-config.exe"
+          # Ensure pkg-config exists at C:\msys64\mingw64\bin\pkg-config.exe
+          $pkgConfig = "C:\msys64\mingw64\bin\pkg-config.exe"
+          if (-not (Test-Path $pkgConfig)) {
+            Write-Host "WARNING: $pkgConfig not found after pacman, checking alternatives..."
+            if (Test-Path "C:\msys64\mingw64\bin\pkgconf.exe") {
+              Copy-Item "C:\msys64\mingw64\bin\pkgconf.exe" -Destination $pkgConfig -Force
+            } elseif (Test-Path "C:\msys64\usr\bin\pkgconf.exe") {
+              Copy-Item "C:\msys64\usr\bin\pkgconf.exe" -Destination $pkgConfig -Force
+            } elseif (Test-Path "C:\msys64\usr\bin\pkg-config.exe") {
+              Copy-Item "C:\msys64\usr\bin\pkg-config.exe" -Destination $pkgConfig -Force
+            }
           }
-          Write-Host "Real pkg-config.exe found at: $realBin"
 
-          "PKG_CONFIG=$realBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          [Environment]::SetEnvironmentVariable("PKG_CONFIG", $realBin, "Machine")
+          # Also ensure C:\msys64\usr\bin has pkg-config
+          if (-not (Test-Path "C:\msys64\usr\bin\pkg-config.exe")) {
+            if (Test-Path "C:\msys64\usr\bin\pkgconf.exe") {
+              Copy-Item "C:\msys64\usr\bin\pkgconf.exe" -Destination "C:\msys64\usr\bin\pkg-config.exe" -Force
+            } elseif (Test-Path $pkgConfig) {
+              Copy-Item $pkgConfig -Destination "C:\msys64\usr\bin\pkg-config.exe" -Force
+            }
+          }
 
-          # Run pacman first to avoid filesystem conflict with pkgconf
-          Write-Host "Installing MSYS2 build utilities..."
-          & "C:\msys64\usr\bin\pacman.exe" -S --noconfirm --needed make perl automake1.16 automake autoconf diffutils patch
+          Write-Host "Verifying pkg-config execution..."
+          & $pkgConfig --version
 
-          # Copy the REAL binary (not the shim) to the paths vcpkg expects
-          New-Item -ItemType Directory -Force -Path "C:\msys64\mingw64\bin", "C:\msys64\usr\bin"
-          Copy-Item $realBin -Destination "C:\msys64\mingw64\bin\pkg-config.exe" -Force
-          Copy-Item $realBin -Destination "C:\msys64\usr\bin\pkg-config.exe" -Force
-          Write-Host "Real pkg-config.exe deployed to msys64 paths."
-
-          # Verify it works
-          & "C:\msys64\mingw64\bin\pkg-config.exe" --version
-
+          "PKG_CONFIG=$pkgConfig" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          "C:\msys64\usr\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          [Environment]::SetEnvironmentVariable("PKG_CONFIG", $pkgConfig, "Machine")
 
       - name: Setup vcpkg with caching
         uses: lukka/run-vcpkg@v11
@@ -141,11 +144,12 @@ jobs:
         run: |
           Copy-Item -Path "res\vcpkg\vcpkg_acquire_msys.cmake" -Destination "C:\vcpkg\scripts\cmake\vcpkg_acquire_msys.cmake" -Force
           Write-Host "Replaced vcpkg_acquire_msys.cmake - vcpkg will now use C:/msys64 directly."
-          Write-Host "pkg-config.exe is at: C:\msys64\mingw64\bin\pkg-config.exe"
+          Write-Host "pkg-config is at: C:\msys64\mingw64\bin\pkg-config.exe"
 
       - name: Install vcpkg static dependencies
         run: |
-          $env:PKG_CONFIG = "C:\ProgramData\chocolatey\bin\pkg-config.exe"
+          $env:PKG_CONFIG = "C:\msys64\mingw64\bin\pkg-config.exe"
+          $env:PATH = "C:\msys64\mingw64\bin;C:\msys64\usr\bin;$env:PATH"
           if (-not $env:ACTIONS_RUNTIME_TOKEN -or -not $env:ACTIONS_CACHE_URL) {
             Write-Host "Actions cache token not found. Falling back to local binary caching."
             $env:VCPKG_BINARY_SOURCES = "clear;default,readwrite"
