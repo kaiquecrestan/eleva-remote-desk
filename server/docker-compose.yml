@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # PostgreSQL Database for Organizations, Users, Plans & Devices
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: eleva-remote-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eleva_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ElevaPostgres2026SecurePass!}
+      POSTGRES_DB: ${POSTGRES_DB:-eleva_remote}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - eleva_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-eleva_admin} -d ${POSTGRES_DB:-eleva_remote}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -------------------------------------------------------------
+  # Eleva Remote REST API (Auth, Address Book, Plan Enforcement, Wake)
+  # -------------------------------------------------------------
+  api-remote:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eleva-remote-api
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      HOST: 0.0.0.0
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-eleva_admin}:${POSTGRES_PASSWORD:-ElevaPostgres2026SecurePass!}@postgres:5432/${POSTGRES_DB:-eleva_remote}
+      JWT_SECRET: ${JWT_SECRET:-eleva-remote-jwt-secret-production-2026-key}
+      SERVER_HOST: desk.elevabs.com
+      API_HOST: https://api-remote.elevabs.com
+      PANEL_HOST: https://remote.elevabs.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - eleva_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.eleva-api.rule=Host(`api-remote.elevabs.com`)"
+      - "traefik.http.routers.eleva-api.entrypoints=websecure"
+      - "traefik.http.routers.eleva-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.eleva-api.loadbalancer.server.port=3000"
+
+  # -------------------------------------------------------------
+  # Eleva Remote Desk - Rendezvous / ID Server (hbbs)
+  # -------------------------------------------------------------
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: eleva-remote-hbbs
+    restart: unless-stopped
+    command: hbbs -r desk.elevabs.com:21117 -k _
+    volumes:
+      - hbbs_data:/root
+    networks:
+      - eleva_network
+    ports:
+      - "21115:21115"
+      - "21116:21116"
+      - "21116:21116/udp"
+      - "21118:21118"
+
+  # -------------------------------------------------------------
+  # Eleva Remote Desk - Relay Server (hbbr)
+  # -------------------------------------------------------------
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: eleva-remote-hbbr
+    restart: unless-stopped
+    command: hbbr -k _
+    volumes:
+      - hbbr_data:/root
+    networks:
+      - eleva_network
+    ports:
+      - "21117:21117"
+      - "21119:21119"
+
+volumes:
+  postgres_data:
+    name: eleva_remote_postgres_data
+  hbbs_data:
+    name: eleva_remote_hbbs_data
+  hbbr_data:
+    name: eleva_remote_hbbr_data
+
+networks:
+  eleva_network:
+    name: eleva_remote_network
