@@ -150,7 +150,7 @@ Section "Install"
   nsExec::Exec 'sc stop "${PRODUCT_NAME}"'
   nsExec::Exec 'sc stop RustDesk'
   Sleep 500 ; Give time for process to be completely killed
-  File "${PRODUCT_NAME}.exe"
+  File /r "app\*.*"
 
   SetShellVarContext all
   CreateShortCut "$INSTDIR\Uninstall ${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_NAME}.exe" "--uninstall" "msiexec.exe"

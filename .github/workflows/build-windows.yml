@@ -207,7 +207,9 @@ jobs:
 
       - name: Build NSIS Setup Installer
         run: |
-          Copy-Item dist\ElevaRemoteDesk.exe -Destination "res\Eleva Remote Desk.exe" -Force
+          New-Item -ItemType Directory -Force -Path res\app
+          Copy-Item rustdesk\* -Destination res\app -Recurse -Force
+          Copy-Item "rustdesk\rustdesk.exe" -Destination "res\app\Eleva Remote Desk.exe" -Force
           & "C:\Program Files (x86)\NSIS\makensis.exe" res\setup.nsi
           Move-Item -Path "res\ElevaRemoteDesk-Setup-x64.exe" -Destination "dist\ElevaRemoteDesk-Setup-x64.exe" -Force
 

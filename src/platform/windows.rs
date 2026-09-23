@@ -460,11 +460,23 @@ fn service_main(arguments: Vec<OsString>) {
 
 pub fn start_os_service() {
     let name = crate::get_app_name();
-    if let Err(e) = windows_service::service_dispatcher::start(&name, ffi_service_main) {
-        let name_no_space = name.replace(" ", "");
-        if let Err(e2) = windows_service::service_dispatcher::start(&name_no_space, ffi_service_main) {
-            log::error!("start_service failed for '{}' ({}) and '{}' ({})", name, e, name_no_space, e2);
+    let name_no_space = name.replace(" ", "");
+    let candidates = [
+        name.as_str(),
+        name_no_space.as_str(),
+        "ElevaRemoteDesk",
+        "Eleva Remote Desk",
+        "RustDesk",
+    ];
+    let mut started = false;
+    for svc_name in &candidates {
+        if windows_service::service_dispatcher::start(svc_name, ffi_service_main).is_ok() {
+            started = true;
+            break;
         }
+    }
+    if !started {
+        log::error!("start_service failed for all candidates: {:?}", candidates);
     }
 }
 
@@ -2557,7 +2569,13 @@ fn get_uninstall_amyuni_idd() -> String {
 
 #[inline]
 pub fn is_self_service_running() -> bool {
-    is_service_running(&crate::get_app_name())
+    let name = crate::get_app_name();
+    let name_no_space = name.replace(" ", "");
+    is_service_running(&name)
+        || is_service_running(&name_no_space)
+        || is_service_running("ElevaRemoteDesk")
+        || is_service_running("Eleva Remote Desk")
+        || is_service_running("RustDesk")
 }
 
 pub fn is_service_running(service_name: &str) -> bool {
