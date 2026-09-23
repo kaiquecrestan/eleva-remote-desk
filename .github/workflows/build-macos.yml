@@ -1,0 +1,134 @@
+name: Eleva Remote Desk - macOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+
+env:
+  FLUTTER_VERSION: "3.24.5"
+  MAC_RUST_VERSION: "1.81"
+  VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
+  ELEVA_VERSION: "1.0.0"
+  ELEVA_REMOTE_ID_SERVER: "desk.elevabs.com:21116"
+  ELEVA_REMOTE_RELAY_SERVER: "desk.elevabs.com:21117"
+  ELEVA_REMOTE_API_URL: "https://api-remote.elevabs.com"
+  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=' }}"
+
+jobs:
+  generate-bridge:
+    uses: ./.github/workflows/bridge.yml
+
+  build-macos:
+    name: Build macOS ${{ matrix.job.arch }}
+    needs: [generate-bridge]
+    runs-on: ${{ matrix.job.os }}
+    permissions:
+      contents: write
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - {
+              target: aarch64-apple-darwin,
+              os: macos-14,
+              arch: arm64,
+              vcpkg-triplet: arm64-osx,
+              extra-args: "--screencapturekit"
+            }
+          - {
+              target: x86_64-apple-darwin,
+              os: macos-13,
+              arch: x86_64,
+              vcpkg-triplet: x64-osx,
+              extra-args: ""
+            }
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build runtime tools
+        run: |
+          brew install llvm create-dmg nasm cmake gcc wget ninja pkg-config
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ env.MAC_RUST_VERSION }}
+          targets: ${{ matrix.job.target }}
+
+      - name: Restore bridge files
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-artifact
+          path: ./
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+          doNotCache: false
+
+      - name: Install vcpkg dependencies
+        run: |
+          $VCPKG_ROOT/vcpkg install --x-install-root="$VCPKG_ROOT/installed" || true
+
+      - name: Build Eleva Remote Desk macOS
+        run: |
+          if [ "${{ matrix.job.target }}" = "aarch64-apple-darwin" ]; then
+            MIN_MACOS_VERSION="12.3"
+            sed -i -e "s/MACOSX_DEPLOYMENT_TARGET\=[0-9]*.[0-9]*/MACOSX_DEPLOYMENT_TARGET=${MIN_MACOS_VERSION}/" build.py
+            sed -i -e "s/platform :osx, '.*'/platform :osx, '${MIN_MACOS_VERSION}'/" flutter/macos/Podfile
+            sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
+          fi
+          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-args }}
+
+      - name: Create DMG Package
+        run: |
+          APP_PATH=$(find ./flutter/build/macos/Build/Products/Release -name "*.app" -maxdepth 1 | head -n 1)
+          APP_NAME=$(basename "$APP_PATH")
+          echo "Found app bundle: $APP_PATH ($APP_NAME)"
+          
+          CREATE_DMG="$(command -v create-dmg)"
+          CREATE_DMG="$(readlink -f "$CREATE_DMG")"
+          sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
+          
+          create-dmg \
+            --volname "Eleva Remote Desk" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "$APP_NAME" 200 190 \
+            --hide-extension "$APP_NAME" \
+            --app-drop-link 600 185 \
+            "ElevaRemoteDesk-macOS-${{ matrix.job.arch }}.dmg" \
+            "$APP_PATH"
+
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ElevaRemoteDesk-macOS-${{ matrix.job.arch }}
+          path: ElevaRemoteDesk-macOS-${{ matrix.job.arch }}.dmg
+
+      - name: Publish to GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release-tag != ''
+        with:
+          tag_name: ${{ inputs.release-tag || github.ref_name }}
+          files: |
+            ElevaRemoteDesk-macOS-${{ matrix.job.arch }}.dmg
