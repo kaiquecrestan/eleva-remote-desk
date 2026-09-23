@@ -1192,26 +1192,26 @@ fn get_after_install(
 
     format!("
     chcp 65001
-    reg add HKEY_CLASSES_ROOT\\.{ext} /f
+    reg add "HKEY_CLASSES_ROOT\.{ext}" /f
     {desktop_shortcuts}
     {start_menu_shortcuts}
     {reg_printer}
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon /f /ve /t REG_SZ  /d \"\\\"{exe}\\\",0\"
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command /f /ve /t REG_SZ /d \"\\\"{exe}\\\" --play \\\"%%1\\\"\"
-    reg add HKEY_CLASSES_ROOT\\{ext} /f
-    reg add HKEY_CLASSES_ROOT\\{ext} /f /v \"URL Protocol\" /t REG_SZ /d \"\"
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command /f /ve /t REG_SZ /d \"\\\"{exe}\\\" \\\"%%1\\\"\"
-    netsh advfirewall firewall add rule name=\"{app_name} Service\" dir=out action=allow program=\"{exe}\" enable=yes
-    netsh advfirewall firewall add rule name=\"{app_name} Service\" dir=in action=allow program=\"{exe}\" enable=yes
+    reg add "HKEY_CLASSES_ROOT\.{ext}\DefaultIcon" /f
+    reg add "HKEY_CLASSES_ROOT\.{ext}\DefaultIcon" /f /ve /t REG_SZ  /d "\"{exe}\",0"
+    reg add "HKEY_CLASSES_ROOT\.{ext}\shell" /f
+    reg add "HKEY_CLASSES_ROOT\.{ext}\shell\open" /f
+    reg add "HKEY_CLASSES_ROOT\.{ext}\shell\open\command" /f
+    reg add "HKEY_CLASSES_ROOT\.{ext}\shell\open\command" /f /ve /t REG_SZ /d "\"{exe}\" --play \"%1\""
+    reg add "HKEY_CLASSES_ROOT\elevadesk" /f /ve /t REG_SZ /d "URL:Eleva Remote Desk Protocol"
+    reg add "HKEY_CLASSES_ROOT\elevadesk" /f /v "URL Protocol" /t REG_SZ /d ""
+    reg add "HKEY_CLASSES_ROOT\elevadesk\shell\open\command" /f /ve /t REG_SZ /d "\"{exe}\" \"%1\""
+    reg add "HKEY_CLASSES_ROOT\rustdesk" /f /ve /t REG_SZ /d "URL:RustDesk Protocol"
+    reg add "HKEY_CLASSES_ROOT\rustdesk" /f /v "URL Protocol" /t REG_SZ /d ""
+    reg add "HKEY_CLASSES_ROOT\rustdesk\shell\open\command" /f /ve /t REG_SZ /d "\"{exe}\" \"%1\""
+    netsh advfirewall firewall add rule name="{app_name} Service" dir=out action=allow program="{exe}" enable=yes
+    netsh advfirewall firewall add rule name="{app_name} Service" dir=in action=allow program="{exe}" enable=yes
     {create_service}
-    reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /f /v SoftwareSASGeneration /t REG_DWORD /d 1
+    reg add HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System /f /v SoftwareSASGeneration /t REG_DWORD /d 1
     ", create_service=get_create_service(&exe))
 }
 
@@ -1416,12 +1416,14 @@ fn get_before_uninstall(kill_self: bool) -> String {
     format!(
         "
     chcp 65001
-    sc stop {app_name}
-    sc delete {app_name}
-    taskkill /F /IM {broker_exe}
-    taskkill /F /IM {app_name}.exe{filter}
-    reg delete HKEY_CLASSES_ROOT\\.{ext} /f
-    reg delete HKEY_CLASSES_ROOT\\{ext} /f
+    sc stop \"{app_name}\"
+    sc delete \"{app_name}\"
+    taskkill /F /IM \"{broker_exe}\"
+    taskkill /F /IM \"{app_name}.exe\"{filter}
+    reg delete \"HKEY_CLASSES_ROOT\\elevadesk\" /f
+    reg delete \"HKEY_CLASSES_ROOT\\rustdesk\" /f
+    reg delete \"HKEY_CLASSES_ROOT\\.{ext}\" /f
+    reg delete \"HKEY_CLASSES_ROOT\\{ext}\" /f
     netsh advfirewall firewall delete rule name=\"{app_name} Service\"
     ",
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
@@ -1445,7 +1447,7 @@ fn get_uninstall(kill_self: bool) -> String {
         "
     {before_uninstall}
     {uninstall_cert_cmd}
-    reg delete {subkey} /f
+    reg delete \"{subkey}\" /f
     {uninstall_amyuni_idd}
     if exist \"{path}\" rd /s /q \"{path}\"
     if exist \"{start_menu}\" rd /s /q \"{start_menu}\"
