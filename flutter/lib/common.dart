@@ -3453,9 +3453,9 @@ Widget loadLogo() {
             },
           );
           return Container(
-            constraints: BoxConstraints(maxWidth: 300, maxHeight: 60),
+            constraints: BoxConstraints(maxWidth: 260, maxHeight: 78),
             child: image,
-          ).marginOnly(left: 12, right: 12, top: 12);
+          ).marginOnly(left: 12, right: 12, top: 12, bottom: 4);
         }
         return const Offstage();
       });
