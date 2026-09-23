@@ -2692,10 +2692,19 @@ class ServerConfig {
 
   /// from local options
   ServerConfig.fromOptions(Map<String, dynamic> options)
-      : idServer = options['custom-rendezvous-server'] ?? "",
-        relayServer = options['relay-server'] ?? "",
+      : idServer = (options['custom-rendezvous-server'] != null &&
+              options['custom-rendezvous-server'].toString().trim().isNotEmpty)
+          ? options['custom-rendezvous-server'].toString().trim()
+          : "desk.eleva.art:21116",
+        relayServer = (options['relay-server'] != null &&
+                options['relay-server'].toString().trim().isNotEmpty)
+            ? options['relay-server'].toString().trim()
+            : "desk.eleva.art:21117",
         apiServer = options['api-server'] ?? "",
-        key = options['key'] ?? "";
+        key = (options['key'] != null &&
+                options['key'].toString().trim().isNotEmpty)
+            ? options['key'].toString().trim()
+            : "lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=";
 }
 
 Widget dialogButton(String text,

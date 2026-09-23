@@ -109,6 +109,15 @@ pub fn global_init() -> bool {
         *hbb_common::config::PROD_RENDEZVOUS_SERVER.write().unwrap() =
             crate::eleva_config::DEFAULT_ID_SERVER.to_string();
     }
+    {
+        let mut def = hbb_common::config::DEFAULT_SETTINGS.write().unwrap();
+        def.entry("custom-rendezvous-server".to_string())
+            .or_insert_with(|| crate::eleva_config::DEFAULT_ID_SERVER.to_string());
+        def.entry("relay-server".to_string())
+            .or_insert_with(|| crate::eleva_config::DEFAULT_RELAY_SERVER.to_string());
+        def.entry("key".to_string())
+            .or_insert_with(|| crate::eleva_config::DEFAULT_PUBLIC_KEY.to_string());
+    }
 
     #[cfg(target_os = "linux")]
     {
