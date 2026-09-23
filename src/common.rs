@@ -955,6 +955,9 @@ fn get_api_server_(api: String, custom: String) -> String {
     if !api.is_empty() {
         return api.into();
     }
+    if !crate::eleva_config::DEFAULT_API_URL.is_empty() {
+        return crate::eleva_config::DEFAULT_API_URL.to_owned();
+    }
     let s0 = get_custom_rendezvous_server(custom);
     if !s0.is_empty() {
         let s = crate::increase_port(&s0, -2);
@@ -963,9 +966,6 @@ fn get_api_server_(api: String, custom: String) -> String {
         } else {
             return format!("http://{}", s);
         }
-    }
-    if !crate::eleva_config::DEFAULT_API_URL.is_empty() {
-        return crate::eleva_config::DEFAULT_API_URL.to_owned();
     }
     "".to_owned()
 }
