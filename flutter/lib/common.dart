@@ -2695,12 +2695,15 @@ class ServerConfig {
       : idServer = (options['custom-rendezvous-server'] != null &&
               options['custom-rendezvous-server'].toString().trim().isNotEmpty)
           ? options['custom-rendezvous-server'].toString().trim()
-          : "desk.eleva.art:21116",
+          : "desk.elevabs.com:21116",
         relayServer = (options['relay-server'] != null &&
                 options['relay-server'].toString().trim().isNotEmpty)
             ? options['relay-server'].toString().trim()
-            : "desk.eleva.art:21117",
-        apiServer = options['api-server'] ?? "",
+            : "desk.elevabs.com:21117",
+        apiServer = (options['api-server'] != null &&
+                options['api-server'].toString().trim().isNotEmpty)
+            ? options['api-server'].toString().trim()
+            : "https://api-remote.elevabs.com",
         key = (options['key'] != null &&
                 options['key'].toString().trim().isNotEmpty)
             ? options['key'].toString().trim()

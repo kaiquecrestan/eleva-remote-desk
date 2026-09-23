@@ -115,6 +115,8 @@ pub fn global_init() -> bool {
             .or_insert_with(|| crate::eleva_config::DEFAULT_ID_SERVER.to_string());
         def.entry("relay-server".to_string())
             .or_insert_with(|| crate::eleva_config::DEFAULT_RELAY_SERVER.to_string());
+        def.entry("api-server".to_string())
+            .or_insert_with(|| crate::eleva_config::DEFAULT_API_URL.to_string());
         def.entry("key".to_string())
             .or_insert_with(|| crate::eleva_config::DEFAULT_PUBLIC_KEY.to_string());
     }
@@ -962,12 +964,15 @@ fn get_api_server_(api: String, custom: String) -> String {
             return format!("http://{}", s);
         }
     }
-    "https://admin.rustdesk.com".to_owned()
+    if !crate::eleva_config::DEFAULT_API_URL.is_empty() {
+        return crate::eleva_config::DEFAULT_API_URL.to_owned();
+    }
+    "".to_owned()
 }
 
 pub fn get_audit_server(api: String, custom: String, typ: String) -> String {
     let url = get_api_server(api, custom);
-    if url.is_empty() || url.contains("rustdesk.com") {
+    if url.is_empty() {
         return "".to_owned();
     }
     format!("{}/api/audit/{}", url, typ)
