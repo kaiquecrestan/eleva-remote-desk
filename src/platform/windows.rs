@@ -1190,7 +1190,8 @@ fn get_after_install(
         })
         .unwrap_or_default();
 
-    format!("
+    format!(
+        r#"
     chcp 65001
     reg add "HKEY_CLASSES_ROOT\.{ext}" /f
     {desktop_shortcuts}
@@ -1211,8 +1212,10 @@ fn get_after_install(
     netsh advfirewall firewall add rule name="{app_name} Service" dir=out action=allow program="{exe}" enable=yes
     netsh advfirewall firewall add rule name="{app_name} Service" dir=in action=allow program="{exe}" enable=yes
     {create_service}
-    reg add HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System /f /v SoftwareSASGeneration /t REG_DWORD /d 1
-    ", create_service=get_create_service(&exe))
+    reg add "HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System" /f /v SoftwareSASGeneration /t REG_DWORD /d 1
+    "#,
+        create_service = get_create_service(&exe)
+    )
 }
 
 pub fn install_me(options: &str, path: String, silent: bool, debug: bool) -> ResultType<()> {
