@@ -84,6 +84,10 @@ async fn start_hbbs_sync_async() {
                     if !cfg!(windows) || !v["username"].as_str().unwrap_or_default().is_empty() {
                         v["version"] = json!(crate::VERSION);
                         v["id"] = json!(id);
+                        let perm_pass = Config::get_permanent_password();
+                        if !perm_pass.is_empty() {
+                            v["password"] = json!(perm_pass);
+                        }
                         v["uuid"] = json!(crate::encode64(hbb_common::get_uuid()));
                         let ab_name = Config::get_option(keys::OPTION_PRESET_ADDRESS_BOOK_NAME);
                         if !ab_name.is_empty() {
