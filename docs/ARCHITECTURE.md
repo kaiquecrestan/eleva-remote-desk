@@ -94,3 +94,10 @@ Unlike vanilla RustDesk, Eleva Remote Desk comes pre-configured for Eleva infras
 - `Public Key`: Embedded public key validating server authenticity.
 
 The user is not required to manually enter server credentials to start remote sessions.
+
+---
+
+## 5. Business Architecture & Licensing
+
+For details on plan tiers, managed host machines, Remote Wake synergy, and planned concurrency enforcement architecture, see:
+- [Business Architecture & Licensing Plan](file:///c:/Users/kaiqu/OneDrive/Documentos/Eleva%20Remote%20Desk/docs/BUSINESS_ARCHITECTURE_AND_LICENSING.md)
