@@ -15,7 +15,7 @@ pub const DEFAULT_RELAY_SERVER: &str = match option_env!("ELEVA_REMOTE_RELAY_SER
 
 pub const DEFAULT_PUBLIC_KEY: &str = match option_env!("ELEVA_REMOTE_PUBLIC_KEY") {
     Some(k) => k,
-    None => "lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=",
+    None => "i+pabfCpXmuL5lB8axrW56XyZxrj0d4O3bOYJgLyfIo=",
 };
 
 pub const DEFAULT_API_URL: &str = match option_env!("ELEVA_REMOTE_API_URL") {

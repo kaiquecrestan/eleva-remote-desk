@@ -20,7 +20,7 @@ env:
   ELEVA_REMOTE_ID_SERVER: "desk.elevabs.com:21116"
   ELEVA_REMOTE_RELAY_SERVER: "desk.elevabs.com:21117"
   ELEVA_REMOTE_API_URL: "https://api-remote.elevabs.com"
-  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=' }}"
+  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'i+pabfCpXmuL5lB8axrW56XyZxrj0d4O3bOYJgLyfIo=' }}"
 
 jobs:
   generate-bridge:

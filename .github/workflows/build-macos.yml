@@ -19,7 +19,7 @@ env:
   ELEVA_REMOTE_ID_SERVER: "desk.elevabs.com:21116"
   ELEVA_REMOTE_RELAY_SERVER: "desk.elevabs.com:21117"
   ELEVA_REMOTE_API_URL: "https://api-remote.elevabs.com"
-  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=' }}"
+  ELEVA_REMOTE_PUBLIC_KEY: "${{ secrets.ELEVA_REMOTE_PUBLIC_KEY || 'i+pabfCpXmuL5lB8axrW56XyZxrj0d4O3bOYJgLyfIo=' }}"
 
 jobs:
   generate-bridge:
@@ -71,22 +71,13 @@ jobs:
         with:
           toolchain: ${{ env.MAC_RUST_VERSION }}
           targets: ${{ matrix.job.target }}
+          components: rustfmt
 
       - name: Restore bridge files
         uses: actions/download-artifact@v4
         with:
           name: bridge-artifact
           path: ./
-
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
-          doNotCache: false
-
-      - name: Install vcpkg dependencies
-        run: |
-          $VCPKG_ROOT/vcpkg install --x-install-root="$VCPKG_ROOT/installed" || true
 
       - name: Build Eleva Remote Desk macOS
         run: |
@@ -96,7 +87,7 @@ jobs:
             sed -i -e "s/platform :osx, '.*'/platform :osx, '${MIN_MACOS_VERSION}'/" flutter/macos/Podfile
             sed -i -e "s/osx_minimum_system_version = \"[0-9]*.[0-9]*\"/osx_minimum_system_version = \"${MIN_MACOS_VERSION}\"/" Cargo.toml
           fi
-          ./build.py --flutter --hwcodec --unix-file-copy-paste ${{ matrix.job.extra-args }}
+          ./build.py --flutter --unix-file-copy-paste ${{ matrix.job.extra-args }}
 
       - name: Create DMG Package
         run: |

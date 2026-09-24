@@ -2707,7 +2707,7 @@ class ServerConfig {
         key = (options['key'] != null &&
                 options['key'].toString().trim().isNotEmpty)
             ? options['key'].toString().trim()
-            : "lgVtWWXXcESrw+SAurhht5h8aU6sTkvaqdI05IHTZuY=";
+            : "i+pabfCpXmuL5lB8axrW56XyZxrj0d4O3bOYJgLyfIo=";
 }
 
 Widget dialogButton(String text,
