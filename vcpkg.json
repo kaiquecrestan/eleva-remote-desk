@@ -54,23 +54,23 @@
       "features": [
         {
           "name": "amf",
-          "platform": "((windows | linux) & static)"
+          "platform": "(windows & static)"
         },
         {
           "name": "nvcodec",
-          "platform": "((windows | linux) & static)"
+          "platform": "(windows & static)"
         },
         {
           "name": "qsv",
           "platform": "(windows & static)"
         }
       ],
-      "platform": "((windows | (linux & !arm32) | osx) & static)"
+      "platform": "(windows & static)"
     },
     {
       "name": "ffmpeg",
       "host": false,
-      "platform": "((android | ios | (linux & arm32)) & static)"
+      "platform": "((android | ios) & static)"
     }
   ],
   "vcpkg-configuration": {
