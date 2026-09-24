@@ -58,7 +58,7 @@ jobs:
 
       - name: Install build runtime tools
         run: |
-          brew install llvm create-dmg nasm cmake gcc wget ninja pkg-config
+          brew install llvm create-dmg nasm cmake gcc wget ninja pkg-config opus
 
       - name: Install Flutter
         uses: subosito/flutter-action@v2
