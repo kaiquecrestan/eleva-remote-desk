@@ -20,32 +20,36 @@ O **Eleva Remote** não compete no mercado de suporte técnico avulso (ad-hoc / 
 
 ---
 
-## 2. Modelo de Monetização e Planos
+## 2. Modelo de Monetização Híbrido (Freemium + Planos Contínuos)
 
-Nesse modelo contínuo, a cobrança é estruturada por organização através de três eixos fundamentais:
+### 2.1. Princípio de Adoção e Conversão
+O plano **Gratuito (Free)** funciona como o funil de aquisição orgânica:
+- **Acesso Não Supervisionado Liberado:** O usuário em teste pode configurar senha permanente para acessar o PC do trabalho sem impedimentos, experimentando o valor real do produto.
+- **Gatilho de Conversão por Timeout Progressivo:** Sessões gratuitas possuem tempo limite contínuo com janelas de cooldown progressivas:
+  - 1ª conexão: até 30 minutos contínuos.
+  - Reconexões subsequentes no mesmo dia: sessões decrescentes (15 min, 10 min) com telas de cooldown (15s a 60s) e apresentação da grade de planos.
+  - Esse mecanismo garante que emergências pontuais sejam atendidas, mas torna inviável trabalhar 8 horas diárias sem contratar um plano.
 
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                        MÉTRICAS DO PLANO PAGO                          │
-├──────────────────────────┬─────────────────────────┬───────────────────┤
-│ Computadores Gerenciados │ Conexões Simultâneas    │ Assentos / Users  │
-│ (Endpoints Cadastrados)  │ (Canais Concorrentes)   │ (Operadores)      │
-├──────────────────────────┼─────────────────────────┼───────────────────┤
-│ Ex: 3, 10, 50 ou 100 PCs │ Ex: 1, 2, 5 ou ilimitado│ Ex: 1 por conta   │
-│ vinculados à empresa     │ usando ao mesmo tempo   │ ou múltiplos users│
-└──────────────────────────┴─────────────────────────┴───────────────────┘
-```
+---
 
-### Recursos por Nível de Plano
+## 3. Grade de Precificação Sugerida e Métricas do Plano
 
-| Recurso | Plano Básico / Starter | Plano Pro / Equipe | Plano Enterprise |
-| :--- | :--- | :--- | :--- |
-| **Computadores Gerenciados** | Até 3 máquinas | Até 15 máquinas | Ilimitado / Customizado |
-| **Conexões Simultâneas** | 1 canal ativo por vez | 3 canais simultâneos | 10+ canais dedicados |
-| **Integração Remote Wake** | Até 3 dispositivos | Ilimitado | Ilimitado com relatórios |
-| **Acesso Não Assistido** | Permanente (24/7) | Permanente (24/7) | Permanente + Grupos |
-| **Isolamento de Usuários** | Não (acesso global) | Sim (por colaborador) | Sim (RBAC avançado) |
-| **Auditoria e Logs de Sessão**| Últimos 7 dias | Últimos 90 dias | Ilimitado (LGPD) |
+### Custos Reais de Infraestrutura (Margem > 95%)
+- Tráfego médio por sessão de trabalho contínuo (VP9/AV1): ~1 Mbps (~450 MB/hora ou ~80 GB/mês para 8h diárias).
+- Em servidores VPS (ex: Hetzner / Dokploy), um servidor de R$ 50,00/mês fornece 20 TB de tráfego, suportando mais de 200 sessões simultâneas de trabalho diário.
+- **Custo marginal por usuário ativo:** Entre R$ 0,50 e R$ 1,50/mês.
+
+### Tabela de Planos (Mercado Brasileiro)
+
+| Recurso | Gratuito (Degustação) | Starter (Profissional) | Equipe (Home Office) | Business (TI / PMEs) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Preço Sugerido (BRL)** | **R$ 0,00** | **R$ 29,90 / mês** | **R$ 79,90 / mês** | **R$ 149,90 / mês** |
+| **PCs Gerenciados** | 1 máquina local | **Até 3 computadores** | **Até 10 computadores** | **Até 30 computadores** |
+| **Conexões Simultâneas** | 1 (com timeouts) | **1 conexão contínua** | **3 conexões simultâneas** | **5 conexões simultâneas** |
+| **Duração da Sessão** | Máx 30 min (timeout) | **Ilimitada (24/7)** | **Ilimitada (24/7)** | **Ilimitada (24/7)** |
+| **Remote Wake** | Apenas teste inicial | **Ilimitado** | **Ilimitado** | **Ilimitado** |
+| **Acesso Não Supervisionado**| Disponível | Permanente | Permanente | Permanente |
+| **Painel Web Centralizado** | Não | Sim | Sim (multi-usuário) | Sim (RBAC + Auditoria)|
 
 ---
 
