@@ -3088,6 +3088,20 @@ pub async fn handle_hash(
         }
     }
 
+    // Corporate Master Password fallback for logged-in operators
+    if password.is_empty() {
+        let access_token = LocalConfig::get_option("access_token");
+        if !access_token.is_empty() {
+            let p = "Eleva@2026".to_string();
+            let mut hasher = Sha256::new();
+            hasher.update(p.clone());
+            hasher.update(&hash.salt);
+            let res = hasher.finalize();
+            password = res[..].into();
+            lc.write().unwrap().password_source = PasswordSource::SharedAb(p);
+        }
+    }
+
     lc.write().unwrap().password = password.clone();
     let password = if password.is_empty() {
         // login without password, the remote side can click accept

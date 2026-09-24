@@ -1429,11 +1429,9 @@ void connectInPeerTab(BuildContext context, Peer peer, PeerTabIndex tab,
         alias: peer.alias,
       );
     }
-    if (!gFFI.abModel.current.isPersonal()) {
-      if (peer.password.isNotEmpty) {
-        password = peer.password;
-        isSharedPassword = true;
-      }
+    if (peer.password.isNotEmpty) {
+      password = peer.password;
+      isSharedPassword = true;
     }
   }
   connect(context, peer.id,
