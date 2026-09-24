@@ -82,6 +82,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
           targets: x86_64-unknown-linux-gnu
+          components: rustfmt
 
       - name: Restore bridge files
         uses: actions/download-artifact@v4
@@ -91,7 +92,7 @@ jobs:
 
       - name: Build Eleva Remote Desk Linux
         run: |
-          ./build.py --flutter --hwcodec --unix-file-copy-paste
+          ./build.py --flutter --unix-file-copy-paste
 
       - name: Find and Package .deb Artifacts
         run: |
