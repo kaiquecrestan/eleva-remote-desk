@@ -329,7 +329,16 @@ class _ConnectionPageState extends State<ConnectionPage>
   /// Connects to the selected peer.
   void onConnect({bool isFileTransfer = false, bool isViewCamera = false}) {
     var id = _idController.id;
+    var password = '';
+    bool isSharedPassword = false;
+    final abPeer = gFFI.abModel.find(id);
+    if (abPeer != null && abPeer.password.isNotEmpty) {
+      password = abPeer.password;
+      isSharedPassword = true;
+    }
     connect(context, id,
+        password: password,
+        isSharedPassword: isSharedPassword,
         isFileTransfer: isFileTransfer, isViewCamera: isViewCamera);
   }
 
